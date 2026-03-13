@@ -1,0 +1,29 @@
+[project]
+name = "openshell-deep-agent"
+version = "0.1.0"
+description = "General-purpose deep agent using OpenShell as the on-prem sandbox provider"
+requires-python = ">=3.12"
+dependencies = [
+    "deepagents>=0.3.0",
+    "langchain>=0.3.0",
+    "langchain-nvidia-ai-endpoints>=0.3.0",
+    "langgraph>=0.4.0",
+    "python-dotenv>=1.0.0",
+    "langgraph-cli[inmem]>=0.1.55",
+    # Install openshell from the OpenShell repo:
+    #   pip install -e /path/to/OpenShell/python
+    # or add as a path dependency in uv.lock:
+    #   uv add /path/to/OpenShell/python
+    "openshell",
+    "grpcio>=1.60.0",
+]
+
+[build-system]
+requires = ["setuptools>=73.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.uv.sources]
+openshell = { path = "../../../OpenShell/python" }
