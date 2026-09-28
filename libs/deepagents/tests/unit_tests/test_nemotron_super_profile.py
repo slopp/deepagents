@@ -11,7 +11,9 @@ def test_super_profile_resolves_for_documented_model() -> None:
         profile = _get_harness_profile(f"{provider}:nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16")
         assert profile is not None
         assert "<state_changes>" in (profile.system_prompt_suffix or "")
-        assert "NemotronToolCallShim" in {middleware.name for middleware in profile.materialize_extra_middleware()}
+        middleware_names = {middleware.name for middleware in profile.materialize_extra_middleware()}
+        assert "NemotronToolCallShim" in middleware_names
+        assert "FollowupDisciplineMiddleware" not in middleware_names
 
 
 def test_super_profile_does_not_apply_to_other_nvidia_models() -> None:
