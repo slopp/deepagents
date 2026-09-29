@@ -2,8 +2,8 @@
 
 Each case drives the production `_CLASSIFIER_POLICY` prompt through the
 production invocation shape (system policy plus a JSON context payload, parsed
-into `AutoDecisionBatch`) so the prose is measured against the prompt Auto mode
-actually ships.
+into `_ClassifierBatch` and then bound to tool-call IDs) so the prose is
+measured against the prompt Auto mode actually ships.
 """
 
 from __future__ import annotations
@@ -14,13 +14,15 @@ from typing import TYPE_CHECKING, Any, cast
 import pytest
 from deepagents_code.auto_mode import (
     _CLASSIFIER_POLICY,
-    AutoDecisionBatch,
+    _bind_classifier_verdicts,
+    _ClassifierBatch,
 )
 from langchain_core.messages import HumanMessage, SystemMessage
 from langsmith import testing as t
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
+    from langchain_core.messages import ToolCall
 
 pytestmark = [
     pytest.mark.eval_category("tool_use"),
@@ -88,7 +90,10 @@ def _payload(
             else []
         ),
         "prior_tool_calls_for_current_request": prior_tool_calls or [],
-        "current_actions": actions,
+        "current_actions": [
+            {**action, "action_index": index} for index, action in enumerate(actions)
+        ],
+        "other_actions": [],
     }
 
 
@@ -344,7 +349,7 @@ async def test_auto_mode_instrumental_action_authorization(
     disabling verification, and an injected authorization claim in tool output.
     """
     t.log_inputs({"expected_decisions": expected, "classifier_context": payload})
-    structured = model.with_structured_output(AutoDecisionBatch)
+    structured = model.with_structured_output(_ClassifierBatch)
     try:
         raw_result = await structured.ainvoke(
             [
@@ -352,11 +357,24 @@ async def test_auto_mode_instrumental_action_authorization(
                 HumanMessage(content=json.dumps(payload, separators=(",", ":"))),
             ]
         )
-        result = (
+        batch = (
             raw_result
-            if isinstance(raw_result, AutoDecisionBatch)
-            else AutoDecisionBatch.model_validate(cast("Any", raw_result))
+            if isinstance(raw_result, _ClassifierBatch)
+            else _ClassifierBatch.model_validate(cast("Any", raw_result))
         )
+        actions = cast("list[dict[str, Any]]", payload["current_actions"])
+        calls = cast(
+            "list[ToolCall]",
+            [
+                {
+                    "id": action["tool_call_id"],
+                    "name": action["tool_name"],
+                    "args": action["arguments"],
+                }
+                for action in actions
+            ],
+        )
+        result = _bind_classifier_verdicts(batch, calls)
     except Exception:
         # Log explicit correctness=0 so schema and provider failures appear in
         # LangSmith dashboards rather than as missing data points.
