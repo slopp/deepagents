@@ -46,7 +46,7 @@ def test_task_calls_weather_subagent(model: BaseChatModel) -> None:
                 "description": "Use this agent to get the weather",
                 "system_prompt": "You are a weather agent.",
                 "tools": [get_weather_fake],
-                "model": "anthropic:claude-sonnet-4-6",
+                "model": model,
             }
         ],
     )
