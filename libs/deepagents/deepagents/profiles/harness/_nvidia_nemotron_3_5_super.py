@@ -1,7 +1,8 @@
-"""Nemotron 3.5 Super harness profile using the verified Nemotron controls.
+"""Experimental Nemotron 3.5 Super harness profile.
 
 The NVIDIA API Catalog identifier is pending publication. Update these exact
-model keys when the public API Catalog entry is available.
+model keys when the public API Catalog entry is available. This candidate has
+not demonstrated an overall gain in the Super 3.5 VL Harbor comparison.
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ def build_nemotron_super_profile() -> HarnessProfile:
 
     The guard replaced correct final answers in the Super evaluation traces.
     Keep the other prompts and middleware while the Super profile is evaluated.
+    This is a staged candidate, not a recommended release configuration.
     """
     ultra = build_nemotron_profile()
 
